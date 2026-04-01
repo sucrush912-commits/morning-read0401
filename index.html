@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>早读动物园</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Microsoft Yai', 'PingFang SC', sans-serif;
+      overflow: hidden;
+      background: linear-gradient(180deg, #87CEEB 0%, #98D8C8 100%);
+      min-height: 100vh;
+      user-select: none;
+    }
+
+    /* 顶部标题区 */
+    .header {
+      text-align: center;
+      padding: 20px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .header h1 {
+      font-size: 2.8em;
+      color: #FF6B6B;
+      text-shadow: 3px 3px 0 #FFE66D, 5px 5px 0 rgba(0,0,0,0.1);
+      letter-spacing: 8px;
+      animation: bounce 2s ease-in-out infinite;
+    }
+
+    .header p {
+      font-size: 1.1em;
+      color: #555;
+      margin-top: 5px;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    /* 互动区域 */
+    .interactive-area {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 100px;
+      overflow: hidden;
+    }
+
+    /* 草坪 */
+    .grass {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: linear-gradient(180deg, #7CB342 0%, #558B2F 100%);
+      border-top: 4px solid #33691E;
+    }
+
+    .grass::before {
+      content: '';
+      position: absolute;
+      top: -20px;
+      left: 0;
+      right: 0;
+      height: 30px;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent 0px,
+        transparent 15px,
+        #7CB342 15px,
+        #7CB342 18px,
+        transparent 18px,
+        transparent 25px
+      );
+      clip-path: polygon(
+        0% 100%, 5% 40%, 10% 100%, 15% 50%, 20% 100%, 25% 30%, 30% 100%,
+        35% 60%, 40% 100%, 45% 40%, 50% 100%, 55% 50%, 60% 100%, 65% 35%,
+        70% 100%, 75% 55%, 80% 100%, 85% 45%, 90% 100%, 95% 50%, 100% 100%
+      );
+    }
+
+    /* 动物样式 */
+    .animal {
+      position: absolute;
+      font-size: 50px;
+      pointer-events: none;
+      z-index: 5;
+      animation: floatUp 4s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+      0% {
+        opacity: 1;
+        transform: translateY(0) scale(0.5) rotate(0deg);
+      }
+      20% {
+        transform: translateY(-20px) scale(1.2) rotate(10deg);
+      }
+      40% {
+        transform: translateY(-50px) scale(1) rotate(-5deg);
+      }
+      60% {
+        transform: translateY(-30px) scale(1.1) rotate(5deg);
+      }
+      80% {
+        opacity: 0.8;
+        transform: translateY(20px) scale(1) rotate(-3deg);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(100px) scale(0.8) rotate(0deg);
+      }
+    }
+
+    /* 底部控制面板 */
+    .control-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0 30px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+      border-radius: 20px 20px 0 0;
+      z-index: 100;
+    }
+
+    .db-display {
+      text-align: center;
+    }
+
+    .db-value {
+      font-size: 2.5em;
+      font-weight: bold;
+      color: #FF6B6B;
+      line-height: 1;
+    }
+
+    .db-label {
+      font-size: 0.9em;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .db-bar {
+      width: 100px;
+      height: 8px;
+      background: #eee;
+      border-radius: 4px;
+      margin-top: 5px;
+      overflow: hidden;
+    }
+
+    .db-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4CAF50, #FFEB3B, #FF5722);
+      border-radius: 4px;
+      transition: width 0.1s ease;
+    }
+
+    .timer-display {
+      text-align: center;
+    }
+
+    .timer-value {
+      font-size: 2em;
+      font-weight: bold;
+      color: #333;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer-label {
+      font-size: 0.9em;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 25px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+    }
+
+    .btn:active {
+      transform: scale(0.95);
+    }
+
+    .btn-start {
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      color: white;
+    }
+
+    .btn-pause {
+      background: linear-gradient(135deg, #FF9800, #f57c00);
+      color: white;
+    }
+
+    .btn-settings {
+      background: linear-gradient(135deg, #2196F3, #1976D2);
+      color: white;
+    }
+
+    .btn-reset-session {
+      background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+      color: white;
+    }
+
+    /* 设置弹窗 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      width: 90%;
+      max-width: 400px;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    .modal h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 25px;
+      font-size: 1.5em;
+    }
+
+    .setting-item {
+      margin-bottom: 20px;
+    }
+
+    .setting-item label {
+      display: block;
+      font-weight: bold;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .slider {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 8px;
+      border-radius: 4px;
+      background: #ddd;
+      outline: none;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #FF6B6B;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .slider-value {
+      min-width: 50px;
+      text-align: center;
+      font-weight: bold;
+      color: #FF6B6B;
+    }
+
+    .animal-list {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .animal-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .animal-item:hover {
+      background: #f5f5f5;
+    }
+
+    .animal-item input {
+      display: none;
+    }
+
+    .animal-item .animal-icon {
+      font-size: 2em;
+      margin-bottom: 5px;
+      transition: transform 0.2s;
+    }
+
+    .animal-item input:checked + .animal-icon {
+      transform: scale(1.2);
+    }
+
+    .animal-item .animal-name {
+      font-size: 0.75em;
+      color: #888;
+    }
+
+    .animal-item input:checked ~ .animal-name {
+      color: #FF6B6B;
+      font-weight: bold;
+    }
+
+    .select-all-btn {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 2px solid #FF6B6B;
+      background: white;
+      color: #FF6B6B;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+
+    .select-all-btn:hover {
+      background: #FF6B6B;
+      color: white;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+    }
+
+    .modal-buttons .btn {
+      flex: 1;
+      justify-content: center;
+    }
+
+    .btn-reset {
+      background: #9E9E9E;
+      color: white;
+    }
+
+    .btn-save {
+      background: linear-gradient(135deg, #FF6B6B, #FF5252);
+      color: white;
+    }
+
+    /* 阈值指示线 */
+    .threshold-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #FF5722;
+      opacity: 0.5;
+      transition: opacity 0.3s;
+    }
+
+    .threshold-line::after {
+      content: '阈值';
+      position: absolute;
+      right: 10px;
+      top: -20px;
+      font-size: 0.8em;
+      color: #FF5722;
+    }
+
+    /* 提示文字 */
+    .hint {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: #666;
+      font-size: 1.2em;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .hint .icon {
+      font-size: 3em;
+      margin-bottom: 10px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>早读动物园</h1>
+    <p>大声朗读，小动物们就会来陪你哦！</p>
+  </div>
+
+  <div class="interactive-area" id="interactiveArea">
+    <div class="grass"></div>
+    <div class="hint" id="hint">
+      <span class="icon">🎤</span>
+      点击"开始"按钮<br>然后大声朗读吧！
+    </div>
+  </div>
+
+  <div class="control-panel">
+    <div class="db-display">
+      <div class="db-value" id="dbValue">0</div>
+      <div class="db-label">分贝</div>
+      <div class="db-bar">
+        <div class="db-bar-fill" id="dbBarFill" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <div class="timer-display">
+      <div class="timer-value" id="timerValue">00:00</div>
+      <div class="timer-label">朗读时间</div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-start" id="startBtn">
+        <span>▶</span> 开始
+      </button>
+      <button class="btn btn-reset-session" id="resetSessionBtn">
+        <span>↺</span> 重置
+      </button>
+      <button class="btn btn-settings" id="settingsBtn">
+        <span>⚙</span> 设置
+      </button>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h2>⚙️ 设置</h2>
+
+      <div class="setting-item">
+        <label>灵敏度（触发阈值）</label>
+        <div class="slider-container">
+          <input type="range" class="slider" id="thresholdSlider" min="20" max="100" value="50">
+          <span class="slider-value" id="thresholdValue">50</span>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <label>动物出现速度</label>
+        <div class="slider-container">
+          <input type="range" class="slider" id="speedSlider" min="1" max="60" value="10">
+          <span class="slider-value" id="speedValue">10</span>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <label>选择动物</label>
+        <button class="select-all-btn" id="selectAllBtn">全选</button>
+        <div class="animal-list" id="animalList"></div>
+      </div>
+
+      <div class="modal-buttons">
+        <button class="btn btn-reset" id="resetBtn">重置</button>
+        <button class="btn btn-save" id="saveBtn">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 可选动物列表
+    const ANIMALS = [
+      { emoji: '🦁', name: '狮子' },
+      { emoji: '🐯', name: '老虎' },
+      { emoji: '🐻', name: '熊' },
+      { emoji: '🐼', name: '熊猫' },
+      { emoji: '🐨', name: '考拉' },
+      { emoji: '🐯', name: '老虎' },
+      { emoji: '🦊', name: '狐狸' },
+      { emoji: '🐰', name: '兔子' },
+      { emoji: '🐱', name: '小猫' },
+      { emoji: '🐶', name: '小狗' },
+      { emoji: '🐸', name: '青蛙' },
+      { emoji: '🦋', name: '蝴蝶' },
+      { emoji: '🐢', name: '乌龟' },
+      { emoji: '🦉', name: '猫头鹰' },
+      { emoji: '🦄', name: '独角兽' },
+      { emoji: '🐳', name: '鲸鱼' }
+    ];
+
+    // 默认设置
+    const DEFAULT_SETTINGS = {
+      threshold: 50,
+      speed: 10,
+      selectedAnimals: ANIMALS.map(a => a.emoji)
+    };
+
+    // 应用状态
+    let settings = { ...DEFAULT_SETTINGS };
+    let audioContext = null;
+    let analyser = null;
+    let microphone = null;
+    let isRunning = false;
+    let isPaused = false;
+    let timerInterval = null;
+    let elapsedSeconds = 0;
+    let lastAnimalTime = 0;
+    let animationFrameId = null;
+
+    // DOM 元素
+    const startBtn = document.getElementById('startBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const resetSessionBtn = document.getElementById('resetSessionBtn');
+    const dbValue = document.getElementById('dbValue');
+    const dbBarFill = document.getElementById('dbBarFill');
+    const timerValue = document.getElementById('timerValue');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const thresholdSlider = document.getElementById('thresholdSlider');
+    const thresholdValue = document.getElementById('thresholdValue');
+    const speedSlider = document.getElementById('speedSlider');
+    const speedValue = document.getElementById('speedValue');
+    const animalList = document.getElementById('animalList');
+    const selectAllBtn = document.getElementById('selectAllBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const interactiveArea = document.getElementById('interactiveArea');
+    const hint = document.getElementById('hint');
+
+    // 从 localStorage 加载设置
+    function loadSettings() {
+      const saved = localStorage.getItem('morningReadSettings');
+      if (saved) {
+        try {
+          settings = { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+        } catch (e) {
+          settings = { ...DEFAULT_SETTINGS };
+        }
+      }
+    }
+
+    // 保存设置到 localStorage
+    function saveSettings() {
+      localStorage.setItem('morningReadSettings', JSON.stringify(settings));
+    }
+
+    // 初始化动物选择列表
+    function initAnimalList() {
+      animalList.innerHTML = '';
+      ANIMALS.forEach(animal => {
+        const item = document.createElement('label');
+        item.className = 'animal-item';
+        item.innerHTML = `
+          <input type="checkbox" value="${animal.emoji}" ${settings.selectedAnimals.includes(animal.emoji) ? 'checked' : ''}>
+          <span class="animal-icon">${animal.emoji}</span>
+          <span class="animal-name">${animal.name}</span>
+        `;
+        animalList.appendChild(item);
+      });
+    }
+
+    // 更新设置弹窗显示
+    function updateSettingsUI() {
+      thresholdSlider.value = settings.threshold;
+      thresholdValue.textContent = settings.threshold;
+      speedSlider.value = settings.speed;
+      speedValue.textContent = settings.speed;
+      initAnimalList();
+    }
+
+    // 创建动物
+    function createAnimal() {
+      if (settings.selectedAnimals.length === 0) return;
+
+      const animal = document.createElement('div');
+      animal.className = 'animal';
+
+      const randomAnimal = settings.selectedAnimals[Math.floor(Math.random() * settings.selectedAnimals.length)];
+      animal.textContent = randomAnimal;
+
+      const areaRect = interactiveArea.getBoundingClientRect();
+      const x = Math.random() * (areaRect.width - 80) + 10;
+      animal.style.left = x + 'px';
+      animal.style.bottom = '80px';
+
+      interactiveArea.appendChild(animal);
+
+      setTimeout(() => {
+        animal.remove();
+      }, 4000);
+    }
+
+    // 计算分贝值
+    function calculateDecibel(dataArray) {
+      let sum = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        sum += dataArray[i];
+      }
+      const average = sum / dataArray.length;
+      const db = Math.round((average / 255) * 100);
+      return db;
+    }
+
+    // 更新分贝显示
+    function updateDecibel() {
+      if (!analyser || !isRunning || isPaused) return;
+
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteFrequencyData(dataArray);
+
+      const db = calculateDecibel(dataArray);
+
+      dbValue.textContent = db;
+      dbBarFill.style.width = Math.min(db, 100) + '%';
+
+      const now = Date.now();
+      const minInterval = 1000 / (settings.speed / 10);
+
+      if (db > settings.threshold && now - lastAnimalTime > minInterval) {
+        createAnimal();
+        lastAnimalTime = now;
+      }
+
+      animationFrameId = requestAnimationFrame(updateDecibel);
+    }
+
+    // 启动麦克风
+    async function startMicrophone() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        microphone = audioContext.createMediaStreamSource(stream);
+        microphone.connect(analyser);
+
+        hint.style.display = 'none';
+        isRunning = true;
+        isPaused = false;
+        startBtn.innerHTML = '<span>⏸</span> 暂停';
+        startBtn.className = 'btn btn-pause';
+
+        startTimer();
+        updateDecibel();
+      } catch (err) {
+        alert('无法访问麦克风，请检查权限设置！');
+        console.error(err);
+      }
+    }
+
+    // 暂停/继续
+    function togglePause() {
+      if (!isRunning) {
+        startMicrophone();
+        return;
+      }
+
+      if (isPaused) {
+        isPaused = false;
+        startBtn.innerHTML = '<span>⏸</span> 暂停';
+        startBtn.className = 'btn btn-pause';
+        resumeTimer();
+        updateDecibel();
+      } else {
+        isPaused = true;
+        startBtn.innerHTML = '<span>▶</span> 继续';
+        startBtn.className = 'btn btn-start';
+        pauseTimer();
+        if (animationFrameId) {
+          cancelAnimationFrame(animationFrameId);
+        }
+      }
+    }
+
+    // 计时器
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        if (!isPaused) {
+          elapsedSeconds++;
+          updateTimerDisplay();
+        }
+      }, 1000);
+    }
+
+    function pauseTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function resumeTimer() {
+      if (!timerInterval) {
+        startTimer();
+      }
+    }
+
+    function updateTimerDisplay() {
+      const minutes = Math.floor(elapsedSeconds / 60);
+      const seconds = elapsedSeconds % 60;
+      timerValue.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      elapsedSeconds = 0;
+      updateTimerDisplay();
+    }
+
+    // 重置会话（重新开始新一轮录制）
+    function resetSession() {
+      resetTimer();
+      elapsedSeconds = 0;
+      updateTimerDisplay();
+      dbValue.textContent = '0';
+      dbBarFill.style.width = '0%';
+      const animals = interactiveArea.querySelectorAll('.animal');
+      animals.forEach(animal => animal.remove());
+      lastAnimalTime = 0;
+      hint.innerHTML = '<span class="icon">🎤</span>重新开始新一轮朗读！';
+      hint.style.display = 'block';
+      setTimeout(() => {
+        hint.style.display = isRunning ? 'none' : 'block';
+      }, 2000);
+    }
+
+    // 打开设置弹窗
+    function openSettings() {
+      if (isRunning) {
+        togglePause();
+      }
+      updateSettingsUI();
+      modalOverlay.classList.add('active');
+    }
+
+    // 关闭设置弹窗
+    function closeSettings() {
+      modalOverlay.classList.remove('active');
+    }
+
+    // 全选/取消全选
+    let selectAllState = true;
+    function toggleSelectAll() {
+      selectAllState = !selectAllState;
+      selectAllBtn.textContent = selectAllState ? '全选' : '全不选';
+      const checkboxes = animalList.querySelectorAll('input');
+      checkboxes.forEach(cb => cb.checked = selectAllState);
+    }
+
+    // 重置设置
+    function resetSettings() {
+      settings = { ...DEFAULT_SETTINGS };
+      saveSettings();
+      updateSettingsUI();
+    }
+
+    // 保存设置
+    function saveSettingsAndClose() {
+      settings.threshold = parseInt(thresholdSlider.value);
+      settings.speed = parseInt(speedSlider.value);
+
+      const checkboxes = animalList.querySelectorAll('input:checked');
+      settings.selectedAnimals = Array.from(checkboxes).map(cb => cb.value);
+
+      if (settings.selectedAnimals.length === 0) {
+        alert('请至少选择一种动物！');
+        return;
+      }
+
+      saveSettings();
+      closeSettings();
+    }
+
+    // 事件绑定
+    startBtn.addEventListener('click', togglePause);
+    resetSessionBtn.addEventListener('click', resetSession);
+    settingsBtn.addEventListener('click', openSettings);
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) closeSettings();
+    });
+    thresholdSlider.addEventListener('input', () => {
+      thresholdValue.textContent = thresholdSlider.value;
+    });
+    speedSlider.addEventListener('input', () => {
+      speedValue.textContent = speedSlider.value;
+    });
+    selectAllBtn.addEventListener('click', toggleSelectAll);
+    resetBtn.addEventListener('click', resetSettings);
+    saveBtn.addEventListener('click', saveSettingsAndClose);
+
+    // 初始化
+    loadSettings();
+  </script>
+</body>
+</html>
